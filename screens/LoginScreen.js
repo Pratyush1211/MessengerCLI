@@ -16,30 +16,33 @@ export default function LoginScreen({navigation}) {
         async function checkLogin(){
             try{
                 let token = await read('token')
-                if(token){
+                let email = await read('email')
+                if(token && email){
                     console.log('Token Found!!')
                     navigation.replace("Home")
                 } 
             } catch(err){
                 console.log('Token Not Found')
             }
+            
         }
         checkLogin()
     }, []);
 
-    const SignIn = async() => {
+    const SignIn = async() => { 
 
         try{
             let data = {
                 email: email,
                 password: password
-            }
+            } 
             let res = await post('/auth/login', data)
             if(res.error){
                 throw new Error(res.error.message)
             } else if(res.message == "success"){
                 console.log('Response ', res)
                 await write('token', res.accessToken)
+                await write('email', res.email)
                 navigation.replace("Home")
             }
             

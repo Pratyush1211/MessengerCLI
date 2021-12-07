@@ -2,33 +2,41 @@ import React, { useLayoutEffect,useState,useEffect } from 'react'
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity,StatusBar } from 'react-native';
 import { Avatar } from "react-native-elements"
 import Customlistitem from '../components/Customlistitem';
-// import { auth, db } from '../firebase';
-// import { AntDesign, SimpleLineIcons } from "@expo/vector-icons";
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-
+import get from '../services/http/get'
+import read from '../services/localstorage/read'
+import { RSA } from 'react-native-rsa-native';
 
 const HomeScreen = ({ navigation }) => {
-
-
-    const SignOutUser = () => {
-        auth.signOut().then(() => {
-            navigation.replace("Login");
-        })
-    };
 
     const [chats, setchats] = useState([])
 
     useEffect(() => {
-        const unsubscribe = db.collection('chats').onSnapshot((snapshot) => 
-            setchats(snapshot.docs.map(doc => ({
-                id: doc.id,
-                data: doc.data(),
-            }))
-            )
-        );
-        return unsubscribe;
+        let unmounted = false;
+
+        async function fetchData(){
+            try{
+                let token = await read('token')
+                let email = await read('email')
+                let res = await get(`/chat/chatlist?userId=${email}`, token)
+                console.log('Home Screen CHATS ', res)
+                setchats(res.data)
+            } catch(err){
+                console.log('Error ', err)
+                alert('Error ', err)
+            }
+        }
+
+        fetchData()
+        return ()=>{
+            unmounted = true
+        }
     }, []);
+
+    const SignOutUser = ()=>{
+        console.log('LOG OUT')
+    }
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -38,9 +46,9 @@ const HomeScreen = ({ navigation }) => {
             headerTintColor: "black",          
             headerLeft: () => (<View style={{ marginLeft: 0,marginRight:15 }}>
                 <TouchableOpacity onPress={SignOutUser}>
-                    <Avatar
+                    {/* <Avatar
                         rounded
-                        source={{ uri: auth?.currentUser?.photoURL }} />
+                        source={{ uri: auth?.currentUser?.photoURL }} /> */}
                 </TouchableOpacity>
             </View>
             ),
@@ -74,13 +82,14 @@ const HomeScreen = ({ navigation }) => {
         });
     }
 
-
     return (
         <ScrollView style={styles.container}>
             <StatusBar style="auto" />
-            {chats.map(({id,data:{chatName}})=>(
-                <Customlistitem key={id} chatName={chatName} enterChat={enterChat}/>
-            ))}
+            {
+                chats.map((email)=>(
+                    <Customlistitem key={email} chatName={email} enterChat={enterChat}/>
+                ))
+            }
             
         </ScrollView>
     )

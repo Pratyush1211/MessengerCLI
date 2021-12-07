@@ -15,6 +15,8 @@ async function post(slug, data, token=null){
         body: JSON.stringify(data)
     })
 
+    console.log('Response POST ', response)
+
     return response.json()
 
 }
